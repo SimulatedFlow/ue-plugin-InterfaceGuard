@@ -1,0 +1,36 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0.0",
+	"FriendlyName": "InterfaceGuard - The Interface Call That Skipped The Blueprint Override",
+	"Description": "IInterface::Execute_FunctionName(Object, Args) - the function UnrealHeaderTool generates for every BlueprintNativeEvent/BlueprintImplementableEvent interface function - is the only call path that routes through UObject::ProcessEvent, which is the only mechanism that respects a Blueprint override of that function. A direct C++ call - casting to the interface pointer and calling the function, or calling TargetObject->OnInteract_Implementation() directly - resolves through the native C++ vtable instead. A Blueprint-only subclass never rewrites that vtable slot: it can only replace the UFunction's script bytecode, which only ProcessEvent ever reads. The direct call therefore compiles cleanly, warns about nothing, and silently runs the base C++ implementation instead of the Blueprint override, with nothing in the log pointing at why. InterfaceGuard finds the gap with the one fact that actually distinguishes the two cases: UFunction::Script.Num() > 0 means a Blueprint graph compiled real bytecode onto that function, which only Execute_ (via ProcessEvent) will ever reach. It scans a running world for every actor implementing a watched interface and reports exactly which classes have a Blueprint override - the classes where a direct call would be wrong - by class name and function name, with a plain-English reason. An optional editor-only Asset Registry scan finds the same thing across every Blueprint asset in the project, loaded or not. The demo map ships the mistake and the fix side by side on two pedestals: a direct C++ call that always hits the native implementation regardless of which pedestal it targets, and an Execute_ call that correctly dispatches to the Blueprint override on the one pedestal that has one - the same red/green difference a real project would see, driven by the same two static functions a real project would call. It does not replace the UHT-generated Execute_ wrappers for interfaces with parameters or return values, and it does not rewrite any code; it names the gap.",
+	"Category": "Gameplay",
+	"CreatedBy": "Silvan Teufel",
+	"CreatedByURL": "https://silvan.teufel-engineering.com",
+	"DocsURL": "https://wiki.teufel-engineering.com/en/InterfaceGuard/documentation",
+	"MarketplaceURL": "",
+	"SupportURL": "mailto:teufelsilvan@gmail.com",
+	"EngineVersion": "5.8.0",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "InterfaceGuard",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "InterfaceGuardEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64"
+			]
+		}
+	]
+}
